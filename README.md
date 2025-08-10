@@ -8,10 +8,11 @@ with [FrankenPHP](https://frankenphp.dev) and [Caddy](https://caddyserver.com/) 
 ## Getting Started
 
 1. If not already done, [install Docker Compose](https://docs.docker.com/compose/install/) (v2.10+)
-2. Run `docker compose build --pull --no-cache` to build fresh images
-3. Run `docker compose up --wait` to set up and start a fresh Symfony project
-4. Open `https://localhost` in your favorite web browser and [accept the auto-generated TLS certificate](https://stackoverflow.com/a/15076602/1352334)
-5. Run `docker compose down --remove-orphans` to stop the Docker containers.
+2. (optional) In `compose.override.yaml` and/or `compose.prod.yaml`, set the UID and GID that the container will run as. In a development environment, it should match your own UID/GID to avoid file permission issues.
+3. Run `docker compose build --pull --no-cache` to build fresh images
+4. Run `docker compose up --wait` to set up and start a fresh Symfony project
+5. Open `https://localhost` in your favorite web browser and [accept the auto-generated TLS certificate](https://stackoverflow.com/a/15076602/1352334)
+6. Run `docker compose down --remove-orphans` to stop the Docker containers.
 
 ## Features
 

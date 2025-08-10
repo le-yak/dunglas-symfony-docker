@@ -11,6 +11,9 @@ FROM dunglas/frankenphp:1-php8.4 AS frankenphp_upstream
 # Base FrankenPHP image
 FROM frankenphp_upstream AS frankenphp_base
 
+ARG PUID
+ARG PGID
+
 WORKDIR /app
 
 VOLUME /app/var/
@@ -53,12 +56,36 @@ ENTRYPOINT ["docker-entrypoint"]
 HEALTHCHECK --start-period=60s CMD curl -f http://localhost:2019/metrics || exit 1
 CMD [ "frankenphp", "run", "--config", "/etc/frankenphp/Caddyfile" ]
 
+RUN set -eux; \
+    ORIG_GID=$(id -g www-data); \
+    ORIG_UID=$(id -u www-data); \
+    PGID="${PGID:-$ORIG_GID}"; \
+    PUID="${PUID:-$ORIG_UID}"; \
+    if [ "$PGID" != "$ORIG_GID" ]; then \
+        groupmod -g "$PGID" www-data; \
+    fi; \
+    if [ "$PUID" != "$ORIG_UID" ] || [ "$PGID" != "$ORIG_GID" ]; then \
+        usermod -u "$PUID" -g "$PGID" www-data; \
+    fi
+
+RUN set -eux; \
+	setcap -r /usr/local/bin/frankenphp; \
+	mkdir -p /data/ /config/; \
+	chown -R www-data:www-data /data/; chown -R www-data:www-data /config/; \
+	mkdir var; \
+	chown www-data:www-data var && \
+	chmod 755 var
+
+USER www-data
+
 # Dev FrankenPHP image
 FROM frankenphp_base AS frankenphp_dev
 
 ENV APP_ENV=dev
 ENV XDEBUG_MODE=off
 ENV FRANKENPHP_WORKER_CONFIG=watch
+
+USER root
 
 RUN mv "$PHP_INI_DIR/php.ini-development" "$PHP_INI_DIR/php.ini"
 
@@ -71,10 +98,14 @@ COPY --link frankenphp/conf.d/20-app.dev.ini $PHP_INI_DIR/app.conf.d/
 
 CMD [ "frankenphp", "run", "--config", "/etc/frankenphp/Caddyfile", "--watch" ]
 
+USER www-data
+
 # Prod FrankenPHP image
 FROM frankenphp_base AS frankenphp_prod
 
 ENV APP_ENV=prod
+
+USER root
 
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 
@@ -94,4 +125,7 @@ RUN set -eux; \
 	composer dump-autoload --classmap-authoritative --no-dev; \
 	composer dump-env prod; \
 	composer run-script --no-dev post-install-cmd; \
-	chmod +x bin/console; sync;
+	chmod +x bin/console; sync; \
+	chown -R www-data:www-data /app/var
+
+USER www-data

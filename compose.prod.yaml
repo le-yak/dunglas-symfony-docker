@@ -4,6 +4,10 @@ services:
     build:
       context: .
       target: frankenphp_prod
+      args:
+        PUID: "${PUID:-33}"
+        PGID: "${PGID:-33}"
+    user: "${PUID:-33}:${PGID:-33}"
     environment:
       APP_SECRET: ${APP_SECRET}
       MERCURE_PUBLISHER_JWT_KEY: ${CADDY_MERCURE_JWT_SECRET}
