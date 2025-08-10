@@ -1,9 +1,14 @@
 # Development environment override
 services:
   php:
+    image: ${IMAGES_PREFIX:-}app-php-dev
     build:
       context: .
       target: frankenphp_dev
+      args:
+        PUID: "${PUID:-1000}"
+        PGID: "${PGID:-1000}"
+    user: "${PUID:-1000}:${PGID:-1000}"
     volumes:
       - ./:/app
       - ./frankenphp/Caddyfile:/etc/frankenphp/Caddyfile:ro
